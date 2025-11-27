@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitest GUI</title>
+  
+  <style>
+    /* ... (All the previous self-contained styles are here) ... */
+    :root {
+      --color-gray-50: #f9fafb;
+      --color-gray-100: #f3f4f6;
+      --color-gray-200: #e5e7eb; 
+      --color-gray-300: #d1d5db;
+      --color-gray-500: #6b7280;
+      --color-gray-600: #4b5563;
+      --color-gray-700: #374151;
+      --color-gray-800: #1f2937;
+      --color-gray-900: #11182c;
+      --color-white: #ffffff;
+      --color-blue-500: #3b82f6;
+      --color-blue-600: #2563eb;
+      --color-blue-700: #1d4ed8;
+      --color-green-100: #dcfce7;
+      --color-green-600: #16a34a;
+      --color-green-700: #15803d;
+      --color-red-100: #fee2e2;
+      --color-red-600: #dc2626;
+      --color-red-700: #f87171;
+      
+      --shadow-inner: inset 0 2px 4px 0 rgba(0,0,0,0.05);
+      --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.25);
+      --radius-md: 0.375rem;
+      --radius-lg: 0.5rem;
+    }
+    
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: var(--color-gray-100);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* --- Main Container --- */
+    .main-container {
+      display: flex;
+      height: 100%;
+      background-color: var(--color-white);
+      max-width: 64rem; /* max-w-6xl */
+      margin: 0 auto;
+    }
+    
+    /* --- Sidebar --- */
+    .sidebar {
+      width: 33.3333%; /* w-1/3 */
+      max-width: 20rem; /* max-w-xs */
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--color-gray-200);
+    }
+    .sidebar-section {
+      padding: 1rem;
+      border-bottom: 1px solid var(--color-gray-200);
+    }
+    .sidebar-section-top {
+      padding: 1rem;
+      border-bottom: 1px solid var(--color-gray-200);
+    }
+    .sidebar-section-scroll {
+      flex: 1 1 0%;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+    .sidebar-section-bottom {
+      padding: 1rem;
+      border-top: 1px solid var(--color-gray-200);
+    }
+
+    /* --- Main Panel --- */
+    .main-panel {
+      width: 66.6667%; /* w-2/3 */
+      flex: 1 1 0%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .main-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--color-gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .main-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      padding: 1rem;
+    }
+    .main-status {
+      padding-left: 1rem;
+      padding-right: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--color-gray-200);
+    }
+    .main-console-output {
+      flex: 1 1 0%;
+      padding: 1rem;
+      overflow-y: auto;
+      min-height: 0;
+    }
+    .main-footer {
+      padding: 1rem;
+      border-top: 1px solid var(--color-gray-200);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+    
+    /* --- Typography & Elements --- */
+    .h-label {
+      font-size: 0.875rem; /* text-sm */
+      font-weight: 600; /* font-semibold */
+      color: var(--color-gray-700);
+    }
+    .h-title {
+      font-size: 1.25rem; /* text-xl */
+      font-weight: 600;
+      color: var(--color-gray-900);
+    }
+    
+    .workspace-path {
+      font-size: 0.875rem;
+      color: var(--color-gray-500);
+      background-color: var(--color-gray-100);
+      padding: 0.375rem 0.75rem;
+      border-radius: var(--radius-md);
+      margin-top: 0.5rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .workspace-path-error {
+      color: var(--color-red-600);
+      font-weight: 500;
+    }
+
+    /* --- Browse Button Style --- */
+     .browse-container {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+    .browse-path-display {
+      font-size: 0.875rem;
+      color: var(--color-gray-500);
+      background-color: var(--color-gray-100);
+      padding: 0.375rem 0.75rem;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1; /* Grow to fill space */
+    }
+    /* This is a standard button now */
+    .btn-browse {
+      font-weight: 500;
+      padding: 0.375rem 0.75rem;
+      border-radius: var(--radius-md);
+      background-color: var(--color-gray-200);
+      color: var(--color-gray-800);
+      cursor: pointer;
+      font-size: 0.875rem;
+      border: none;
+    }
+    .btn-browse:hover {
+      background-color: var(--color-gray-300);
+    }
+    /* The hidden input is no longer needed */
+    #folder-input {
+      display: none;
+    }
+    
+    /* --- Checkboxes --- */
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .test-checkbox {
+      width: 1.15em;
+      height: 1.15em;
+      border: 2px solid var(--color-gray-300);
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .test-checkbox:checked {
+      background-color: var(--color-blue-500);
+      border-color: var(--color-blue-500);
+    }
+    .checkbox-label {
+      font-size: 0.875rem;
+      color: var(--color-gray-800);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .checkbox-label-all {
+      font-weight: 500;
+      color: var(--color-gray-900);
+    }
+    
+    /* --- Buttons --- */
+    .btn {
+      font-weight: 700;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-lg);
+      transition: background-color 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background-color: var(--color-blue-600);
+      color: var(--color-white);
+    }
+    .btn-primary:hover {
+      background-color: var(--color-blue-700);
+    }
+    .btn-secondary {
+      background-color: var(--color-gray-200);
+      color: var(--color-gray-800);
+    }
+    .btn-secondary:hover {
+      background-color: var(--color-gray-300);
+    }
+    .btn-full {
+      width: 100%;
+    }
+    
+    /* --- Cards --- */
+    .card {
+      padding: 1rem;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-inner);
+    }
+    .card-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    .card-value {
+      font-size: 2.25rem; /* text-4xl */
+      font-weight: 700;
+      margin-top: 0.5rem;
+    }
+    
+    .card-gray { background-color: var(--color-gray-100); }
+    .card-gray .card-label { color: var(--color-gray-600); }
+    .card-gray .card-value { color: var(--color-gray-900); }
+    
+    .card-green { background-color: var(--color-green-100); }
+    .card-green .card-label { color: var(--color-green-700); }
+    .card-green .card-value { color: var(--color-green-600); }
+
+    .card-red { background-color: var(--color-red-100); }
+    .card-red .card-label { color: var(--color-red-700); }
+    .card-red .card-value { color: var(--color-red-600); }
+    
+    /* --- Status --- */
+    .status-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .status-text {
+      font-size: 1.125rem; /* text-lg */
+      font-weight: 600;
+    }
+    .status-text-default { color: var(--color-gray-500); }
+    .status-text-pass { color: var(--color-green-600); }
+    .status-text-fail { color: var(--color-red-600); }
+    .status-text-error { color: var(--color-red-600); }
+    
+    /* --- Console --- */
+    .console-pre {
+      width: 100%;
+      height: 12rem; /* h-48 */
+      padding: 0.75rem;
+      background-color: var(--color-gray-900);
+      color: var(--color-gray-200);
+      font-size: 0.75rem; /* text-xs */
+      font-family: monospace;
+      border-radius: var(--radius-md);
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    
+    /* --- Loading Overlay --- */
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background-color: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .loading-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .loading-text {
+      margin-top: 1rem;
+      font-size: 1.125rem;
+      font-weight: 500;
+      color: var(--color-gray-700);
+    }
+    .hidden {
+      display: none;
+    }
+    
+    /* --- Icons --- */
+    .icon {
+      width: 1.25em;
+      height: 1.25em;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+    .icon-inline {
+      width: 1em;
+      height: 1em;
+      display: inline-block;
+      vertical-align: -0.125em;
+      margin-right: 0.5rem;
+    }
+    .icon-status {
+      width: 1.25rem; /* w-5 */
+      height: 1.25rem; /* h-5 */
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+    
+    /* --- File Tree Styles --- */
+    .file-tree-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .file-tree details {
+      padding-left: 1rem;
+    }
+    .file-tree summary {
+      cursor: pointer;
+      list-style: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-gray-700);
+    }
+    .file-tree summary::before {
+      content: '📁';
+      margin-right: 0.5rem;
+    }
+    .file-tree details[open] > summary::before {
+      content: '📂';
+    }
+    .file-tree .file-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding-left: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .file-tree details .file-item {
+      padding-left: 0.25rem;
+    }
+    .file-tree .file-item::before {
+      content: '📄';
+      font-size: 0.875rem;
+      margin-left: -0.25rem;
+    }
+
+    /* --- ADDED: Styles for pass/fail file labels --- */
+    .checkbox-label.file-label-pass {
+      color: var(--color-green-700);
+      font-weight: 600;
+    }
+    .checkbox-label.file-label-fail {
+      color: var(--color-red-700);
+      font-weight: 600;
+    }
+
+  </style>
+</head>
+<body class="bg-gray-100 h-screen overflow-hidden">
+
+  <!-- Main Container -->
+  <div class="main-container">
+    
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-section-top">
+        <h2 class="h-label">Locate workspace:</h2>
+        
+        <!-- MODIFIED: This is now a simple button -->
+        <div class="browse-container">
+          <div id="workspace-path" class="browse-path-display" title="This path comes from the Node.js server">
+            Connecting...
+          </div>
+          <button id="browse-btn" class="btn-browse">Browse</button>
+        </div>
+        <!-- END MODIFIED SECTION -->
+
+      </div>
+
+      <!-- Discovered Tests -->
+      <div class="sidebar-section-scroll">
+        <h2 class="h-label" style="margin-bottom: 0.75rem;">Discovered tests:</h2>
+        <div id="file-list-container">
+          <div class="checkbox-container">
+            <input type="checkbox" id="check-all" class="test-checkbox" checked>
+            <label for="check-all" class="checkbox-label checkbox-label-all">All</label>
+          </div>
+          <hr style="margin: 0.5rem 0; border-color: var(--color-gray-200);">
+          <div id="file-list" class="file-tree-container">
+            <div id="file-list-loading" style="font-size: 0.875rem; color: var(--color-gray-500);">
+              Click 'Browse' to load mock test files.
+            </div>
+            <div id="file-list-error" class="hidden" style="font-size: 0.875rem; color: var(--color-red-600);"></div>
+            <div id="file-tree-root" class="file-tree"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Run Tests Button -->
+      <div class="sidebar-section-bottom">
+        <button id="run-tests-btn" class="btn btn-primary btn-full">
+          <svg class="icon icon-inline" viewBox="0 0 24 24">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Run Tests
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Panel: Output Section -->
+    <main class="main-panel">
+      <!-- (Main panel is unchanged) -->
+       <div class="main-header">
+        <h1 class="h-title">Test Run Summary</h1>
+        <div style="font-size: 0.75rem; color: var(--color-gray-500);">
+          Run On: <span id="run-timestamp">N/A</span>
+        </div>
+      </div>
+      <div id="summary-cards" class="main-cards">
+        <div class="card card-gray">
+          <h3 class="card-label">Total Tests Executed</h3>
+          <p id="total-tests" class="card-value">0</p>
+        </div>
+        <div class="card card-green">
+          <h3 class="card-label">Tests Passed</h3>
+          <p id="passed-tests" class="card-value">0</p>
+        </div>
+        <div class="card card-red">
+          <h3 class="card-label">Tests Failed</h3>
+          <p id="failed-tests" class="card-value">0</p>
+        </div>
+      </div>
+      <div class="main-status">
+        <div id="status-indicator" class="status-container">
+          <span class="status-text status-text-default">Status:</span>
+          <span id="status-text" class="status-text status-text-default">Not Run</span>
+        </div>
+      </div>
+      <div class="main-console-output">
+        <h3 class="h-label" style="margin-bottom: 0.5rem;">Details</h3>
+        <pre id="console-output" class="console-pre">Run tests to see output...</pre>
+      </div>
+      <div class="main-footer">
+        <button id="close-btn" class="btn btn-secondary">Close</button>
+        <button id="run-again-btn" class="btn btn-primary">
+          <svg class="icon icon-inline" viewBox="0 0 24 24">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          Run Tests Again
+        </button>
+      </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+      <div class="loading-content">
+        <svg class="icon animate-spin" style="width: 3rem; height: 3rem; color: var(--color-blue-600);" viewBox="0 0 24 24">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+        </svg>
+        <span id="loading-text" class="loading-text">Running tests...</span>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // --- Config ---
+      const agentUrl = 'http://localhost:4001';
+
+      // --- Element References ---
+      const workspacePath = document.getElementById('workspace-path');
+      // MODIFIED: Get the browse button
+      const browseBtn = document.getElementById('browse-btn'); 
+      const loadingText = document.getElementById('loading-text'); 
+      
+      const checkAll = document.getElementById('check-all');
+      const fileTreeRoot = document.getElementById('file-tree-root');
+      const fileListLoading = document.getElementById('file-list-loading');
+      const fileListError = document.getElementById('file-list-error');
+      
+      const runTestsBtn = document.getElementById('run-tests-btn');
+      const runAgainBtn = document.getElementById('run-again-btn');
+      const closeBtn = document.getElementById('close-btn');
+
+      const runTimestamp = document.getElementById('run-timestamp');
+      const totalTests = document.getElementById('total-tests');
+      const passedTests = document.getElementById('passed-tests');
+      const failedTests = document.getElementById('failed-tests');
+      
+      const statusIndicator = document.getElementById('status-indicator');
+      const statusText = document.getElementById('status-text');
+      const consoleOutput = document.getElementById('console-output');
+      const loadingOverlay = document.getElementById('loading-overlay');
+
+      let allTestFiles = [];
+
+      // --- Helper Functions ---
+      const getTimestamp = () => new Date().toLocaleString();
+      
+      // ADDED: Helper to reset colors
+      function resetFileColors() {
+        const allLabels = document.querySelectorAll('.checkbox-label');
+        allLabels.forEach(label => {
+          label.classList.remove('file-label-pass', 'file-label-fail');
+        });
+      }
+
+      // --- API Functions ---
+      async function fetchWorkspace() {
+        try {
+          const response = await fetch(`${agentUrl}/workspace`);
+          if (!response.ok) {
+            throw new Error(`Server error: ${response.statusText}`);
+          }
+          const data = await response.json();
+          workspacePath.textContent = data.path;
+          workspacePath.title = data.path;
+        } catch (err) {
+          console.error('Failed to fetch workspace:', err);
+          workspacePath.textContent = 'Connection Error';
+          workspacePath.title = `Error: ${err.message}. Is the agent running?`;
+          workspacePath.classList.add('workspace-path-error');
+        }
+      }
+
+      async function fetchTests() {
+        resetFileColors(); // ADDED: Reset colors
+        fileTreeRoot.innerHTML = '';
+        fileListError.classList.add('hidden');
+        fileListLoading.textContent = 'Loading test files...';
+        fileListLoading.style.color = 'var(--color-gray-500)';
+        fileListLoading.classList.remove('hidden');
+
+        try {
+          const response = await fetch(`${agentUrl}/tests`);
+          if (!response.ok) {
+            throw new Error(`Server error: ${response.statusText}`);
+          }
+          const files = await response.json();
+          allTestFiles = files;
+          
+          fileListLoading.classList.add('hidden');
+          
+          if (files.length === 0) {
+            fileTreeRoot.innerHTML = '<div style="font-size: 0.875rem; color: var(--color-gray-500);">No test files found.</div>';
+            return;
+          }
+
+          const fileTree = buildFileTree(files);
+          renderFileTree(fileTree, fileTreeRoot);
+          
+          addCheckboxListeners();
+          
+        } catch (err) {
+          console.error('Failed to fetch tests:', err);
+          fileListLoading.classList.add('hidden');
+          fileListError.classList.remove('hidden');
+          fileListError.textContent = `Error: ${err.message}. Is the agent running?`;
+        }
+      }
+
+      async function runTestsHandler() {
+        const selectedFiles = Array.from(document.querySelectorAll('.test-file-checkbox:checked'))
+          .map(cb => cb.dataset.path);
+        
+        const isRunAll = checkAll.checked;
+        
+        // FIXED: Check allTestFiles array
+        if (allTestFiles.length === 0) {
+            consoleOutput.textContent = 'Please "Browse" to load mock tests first.';
+            return;
+        }
+        
+        if (!isRunAll && selectedFiles.length === 0) {
+          consoleOutput.textContent = 'Please select at least one test file to run, or check "All".';
+          return;
+        }
+
+        loadingText.textContent = 'Running tests...'; // Set text for running
+        loadingOverlay.classList.remove('hidden');
+        consoleOutput.textContent = 'Running tests...';
+        
+        const filesToRun = isRunAll ? [] : selectedFiles; 
+        
+        const url = isRunAll ? `${agentUrl}/run-all` : `${agentUrl}/run`;
+        const body = isRunAll ? JSON.stringify({}) : JSON.stringify({ testPaths: filesToRun });
+
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body,
+          });
+
+          const results = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(results.details || results.error || 'Unknown error');
+          }
+
+          renderResults(results);
+
+        } catch (err) { // FIXED: Added {}
+          console.error('Failed to run tests:', err);
+          renderError(err);
+        } finally { // FIXED: Added {}
+          loadingOverlay.classList.add('hidden');
+          runTimestamp.textContent = getTimestamp();
+        }
+      }
+
+      // --- Tree Building Functions ---
+      function buildFileTree(paths) {
+        const tree = {};
+        paths.forEach(path => {
+          const parts = path.replace(/\\/g, '/').split('/');
+          let currentNode = tree;
+          
+          parts.forEach((part, index) => {
+            if (index === parts.length - 1) {
+              currentNode[part] = {
+                isFile: true,
+                path: path
+              };
+            } else {
+              if (!currentNode[part]) {
+                currentNode[part] = {};
+              }
+              currentNode = currentNode[part];
+            }
+          });
+        });
+        return tree; // FIXED: Changed . to ;
+      }
+
+      function renderFileTree(node, container) {
+        const keys = Object.keys(node).sort((a, b) => {
+          const aIsFile = node[a].isFile;
+          const bIsFile = node[b].isFile;
+          if (aIsFile && !bIsFile) return 1;
+          if (!aIsFile && bIsFile) return -1; // FIXED: Changed bIsBile to bIsFile
+          return a.localeCompare(b);
+        });
+
+        keys.forEach((key, index) => {
+          const childNode = node[key];
+          
+          if (childNode.isFile) {
+            const fileId = `test-file-${childNode.path.replace(/[\W_]/g, '-')}`;
+            const fileEl = document.createElement('div');
+            fileEl.className = 'file-item';
+            fileEl.innerHTML = `
+              <input type="checkbox" id="${fileId}" data-path="${childNode.path}" class="test-checkbox test-file-checkbox" checked>
+              <label for="${fileId}" class="checkbox-label" title="${childNode.path}">${key}</label>
+            `;
+            container.appendChild(fileEl);
+            
+          } else {
+            const details = document.createElement('details');
+            const summary = document.createElement('summary');
+            summary.textContent = key;
+            details.appendChild(summary);
+            
+            const childrenContainer = document.createElement('div');
+            renderFileTree(childNode, childrenContainer);
+            details.appendChild(childrenContainer);
+            
+            container.appendChild(details);
+          }
+        });
+      }
+
+      // --- Render Functions (Error/Results) ---
+      function renderError(err) {
+        totalTests.textContent = '0';
+        passedTests.textContent = '0';
+        failedTests.textContent = '0';
+        statusText.textContent = 'Error';
+        statusIndicator.innerHTML = `
+          <span class="status-text status-text-error">Status:</span>
+          <span id="status-text" class="status-text status-text-error">Error</span>
+          <svg class="icon icon-status" style="color: var(--color-red-600);" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+        `;
+        consoleOutput.textContent = `An error occurred:\n\n${err.message}`;
+      }
+
+      function renderResults(results) {
+        resetFileColors(); // Reset colors
+
+        if (!results.testResults) {
+           consoleOutput.textContent = 'No test suites found or run.';
+           return;
+        }
+        
+        totalTests.textContent = results.numTotalTests;
+        passedTests.textContent = results.numPassedTests;
+        failedTests.textContent = results.numFailedTests;
+
+        const isFailed = results.numFailedTests > 0;
+        statusText.textContent = isFailed ? 'Failed' : 'Passed';
+        
+        if (isFailed) {
+          statusIndicator.innerHTML = `
+            <span class="status-text status-text-fail">Status:</span>
+            <span id="status-text" class="status-text status-text-fail">Failed</span>
+            <svg class="icon icon-status" style="color: var(--color-red-600);" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+          `;
+        } else {
+          statusIndicator.innerHTML = `
+            <span class="status-text status-text-pass">Status:</span>
+            <span id="status-text" class="status-text status-text-pass">Passed</span>
+            <svg class="icon icon-status" style="color: var(--color-green-600);" viewBox="0 0 24 24">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          `;
+        }
+
+        let consoleText = `Test run finished at ${getTimestamp()}\n`;
+        consoleText += `Summary: ${results.numPassedTests} passed, ${results.numFailedTests} failed, ${results.numTotalTests} total.\n\n`;
+        
+        if (results.testResults) {
+          // FIXED: This logic is needed to match server path to client path
+          const baseWorkspacePath = workspacePath.textContent.endsWith('\\') ? workspacePath.textContent : workspacePath.textContent + '\\';
+
+          results.testResults.forEach(suite => {
+            // This replacement logic is the key to matching the paths
+            const relativeSuitePath = suite.name.replace(baseWorkspacePath, '').replace(/\\/g, '/');
+            
+            consoleText += `--- Suite: ${relativeSuitePath} (${suite.status}) ---\n`;
+            
+            suite.assertionResults.forEach(test => {
+              consoleText += `  [${test.status.toUpperCase()}] ${test.title}\n`;
+              if (test.status === 'failed') {
+                const cleanMessage = (test.failureMessages || []).join('\n\n')
+                  .replace(/[\u001b\u009b][[()#;?]*.{0,2}m/g, '')
+                  .replace(/^/gm, '    ');
+                consoleText += `\n${cleanMessage}\n\n`;
+              }
+            });
+            consoleText += '\n';
+            
+            // FIXED: Apply colors to file tree
+            // We use the 'relativeSuitePath' which matches the mock data
+            const fileId = `test-file-${relativeSuitePath.replace(/[\W_]/g, '-')}`;
+            const label = document.querySelector(`label[for="${fileId}"]`);
+            
+            if (label) {
+              if (suite.status === 'failed') {
+                label.classList.add('file-label-fail');
+              } else if (suite.status === 'passed') {
+                label.classList.add('file-label-pass');
+              }
+            } else {
+              console.warn(`Could not find label for fileId: ${fileId} (Path: ${relativeSuitePath})`);
+            }
+            // --- END FIXED ---
+          });
+        }
+        
+        consoleOutput.textContent = consoleText;
+      }
+      
+      // --- Event Listeners ---
+      function addCheckboxListeners() {
+        const allFileCheckboxes = document.querySelectorAll('.test-file-checkbox');
+        
+        checkAll.addEventListener('change', () => {
+          const isChecked = checkAll.checked;
+          allFileCheckboxes.forEach(cb => {
+            cb.checked = isChecked;
+          });
+        });
+
+        allFileCheckboxes.forEach(cb => {
+          cb.addEventListener('change', () => {
+            if (!cb.checked) {
+              checkAll.checked = false;
+            } else {
+              const allChecked = Array.from(allFileCheckboxes).every(box => box.checked);
+              if (allChecked) {
+                checkAll.checked = true;
+              }
+            }
+          });
+        });
+      }
+      
+      runTestsBtn.addEventListener('click', runTestsHandler);
+      runAgainBtn.addEventListener('click', runTestsHandler);
+      
+      closeBtn.addEventListener('click', () => {
+        document.body.innerHTML = '<h1 style="font-size: 1.5rem; padding: 2.5rem;">You can close this tab.</h1>';
+      });
+
+      // --- MODIFIED: Event Listener for the "Browse" button ---
+      browseBtn.addEventListener('click', () => {
+        console.log('Browse button clicked, fetching mock tests...');
+        fetchTests(); // This now fetches the mock tests
+      });
+      // --- END MODIFIED ---
+      
+      // --- Initial Load ---
+      fetchWorkspace(); // Still fetch the workspace path on load
+    });
+  </script>
+</body>
+</html>
+
