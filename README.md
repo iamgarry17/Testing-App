@@ -89,9 +89,3 @@ npm test
 
 Pull requests are welcome.\
 Open an issue for discussion before major changes.
-
-------------------------------------------------------------------------
-
-## 📄 License
-
-This project is licensed under the MIT License.
